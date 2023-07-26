@@ -123,7 +123,7 @@ def human_size(num_bytes):
 
 
 class SuppressOutput:
-    def __init__(self, verbose: bool =False):
+    def __init__(self, verbose: bool = False):
         self.verbose = verbose
 
     def __enter__(self):

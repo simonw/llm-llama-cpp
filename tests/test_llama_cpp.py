@@ -1,7 +1,6 @@
-from sqlite_utils.plugins import get_plugins
+from llm.plugins import pm
 
 
 def test_plugin_is_installed():
-    plugins = get_plugins()
-    names = [plugin["name"] for plugin in plugins]
-    assert "sqlite-utils-llama-cpp" in names
+    plugins = pm.get_plugins()
+    assert "llm_llama_cpp" in {mod.__name__ for mod in pm.get_plugins()}
