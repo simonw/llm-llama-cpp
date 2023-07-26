@@ -27,3 +27,6 @@ test = ["pytest"]
 mac_arm64 = [
   "llama-cpp-python @ https://static.simonwillison.net/static/2023/llama_cpp_python-0.1.77-cp311-cp311-macosx_13_0_arm64.whl"  
 ]
+compile = [
+    "llama-cpp-python"
+]
