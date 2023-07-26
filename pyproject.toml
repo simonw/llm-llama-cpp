@@ -1,0 +1,29 @@
+[project]
+name = "llm-llama-cpp"
+version = "0.1"
+description = "LLM plugin for running models using llama.cpp"
+readme = "README.md"
+authors = [{name = "Simon Willison"}]
+license = {text = "Apache-2.0"}
+classifiers = [
+    "License :: OSI Approved :: Apache Software License"
+]
+dependencies = [
+    "llm",
+    "httpx",
+]
+
+[project.urls]
+Homepage = "https://github.com/simonw/llm-llama-cpp"
+Changelog = "https://github.com/simonw/llm-llama-cpp/releases"
+Issues = "https://github.com/simonw/llm-llama-cpp/issues"
+CI = "https://github.com/simonw/llm-llama-cpp/actions"
+
+[project.entry-points.llm]
+llama_cpp = "llm_llama_cpp"
+
+[project.optional-dependencies]
+test = ["pytest"]
+mac_arm64 = [
+  "llama-cpp-python @ https://static.simonwillison.net/static/2023/llama_cpp_python-0.1.77-cp311-cp311-macosx_13_0_arm64.whl"  
+]
