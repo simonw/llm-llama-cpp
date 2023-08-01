@@ -64,17 +64,24 @@ def register_commands(cli):
 
     @llama_cpp.command()
     @click.argument("url")
-    def download_model(url):
+    @click.option(
+        "aliases",
+        "-a",
+        "--alias",
+        multiple=True,
+        help="Alias(es) to register the model under",
+    )
+    def download_model(url, aliases):
         "Download and register a model from a URL"
         if not url.endswith(".bin"):
             raise click.BadParameter("URL must end with .bin")
         with httpx.stream("GET", url, follow_redirects=True) as response:
-            # Total size in bytes.
             total_size = response.headers.get("content-length")
 
             filename = url.split("/")[-1]
-            # Set download path
-            download_path = filename
+            download_path = _ensure_models_dir() / filename
+            if download_path.exists():
+                raise click.ClickException(f"File already exists at {download_path}")
 
             with open(download_path, "wb") as fp:
                 if total_size is not None:  # If Content-Length header is present
@@ -89,6 +96,16 @@ def register_commands(cli):
                 else:  # If Content-Length header is not present
                     for data in response.iter_bytes(1024):
                         fp.write(data)
+
+            click.echo(f"Downloaded model to {download_path}", err=True)
+            models_file = _ensure_models_file()
+            models = json.loads(models_file.read_text())
+            model_id = download_path.stem
+            models[model_id] = {
+                "path": str(download_path.resolve()),
+                "aliases": aliases,
+            }
+            models_file.write_text(json.dumps(models, indent=2))
 
     @llama_cpp.command()
     @click.argument(
