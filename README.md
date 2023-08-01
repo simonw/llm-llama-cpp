@@ -34,15 +34,17 @@ The plugin can download models for you. Try running this command:
 ```bash
 llm llama-cpp download-model \
   https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGML/resolve/main/llama-2-7b-chat.ggmlv3.q8_0.bin \
-  --alias llama2-chat --alias l2c
+  --alias llama2-chat --alias l2c --llama2-chat
 ```
 This will download the Llama 2 7B Chat GGML model file (this one is 6.67GB), save it and register it with the plugin - with two aliases, `llama2-chat` and `l2c`.
+
+The `--llama2-chat` option configures it to run using a special Llama 2 Chat prompt format. You should omit this for models that are not Llama 2 Chat models.
 
 If you have already downloaded a `llama.cpp` compatible model you can tell the plugin to read it from its current location like this:
 
 ```bash
 llm llama-cpp add-model path/to/llama-2-7b-chat.ggmlv3.q8_0.bin \
-  --alias l27c
+  --alias l27c --llama2-chat
 ```
 The model filename (minus the `.bin` extension) will be registered as its ID for executing the model.
 
@@ -82,6 +84,8 @@ llm -m llama2-chat 'five creative names for a pet hedgehog'
 
 ## More models to try
 
+### Llama 2 7B
+
 This model is Llama 2 7B GGML without the chat training. You'll need to prompt it slightly differently:
 ```bash
 llm llama-cpp download-model \
@@ -92,8 +96,14 @@ Try prompts that expect to be completed by the model, for example:
 ```bash
 llm -m llama2 'Three fancy names for a posh albatross are:'
 ```
+### Llama 2 Chat 13B
 
-
+This model is the Llama 2 13B Chat GGML model - a 13.83GB download:
+```bash
+llm llama-cpp download-model \
+  'https://huggingface.co/TheBloke/Llama-2-13B-chat-GGML/resolve/main/llama-2-13b-chat.ggmlv3.q8_0.bin'\
+  -a llama2-chat-13b --llama2-chat
+```
 ## Development
 
 To set up this plugin locally, first checkout the code. Then create a new virtual environment:
