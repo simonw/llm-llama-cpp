@@ -5,7 +5,7 @@
 [![Tests](https://github.com/simonw/llm-llama-cpp/workflows/Test/badge.svg)](https://github.com/simonw/llm-llama-cpp/actions?query=workflow%3ATest)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/simonw/llm-llama-cpp/blob/main/LICENSE)
 
-[LLM](https://llm.datasette.io/) plugin for running models using llama.cpp
+[LLM](https://llm.datasette.io/) plugin for running models using [llama.cpp](https://github.com/ggerganov/llama.cpp)
 
 ## Installation
 
