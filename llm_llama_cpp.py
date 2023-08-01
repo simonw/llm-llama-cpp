@@ -16,6 +16,12 @@ except ImportError:
         file=sys.stderr,
     )
 
+DEFAULT_LLAMA2_CHAT_SYSTEM_PROMPT = """
+You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
+
+If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
+""".strip()
+
 
 def _ensure_models_dir():
     directory = llm.user_dir() / "llama-cpp" / "models"
@@ -40,7 +46,14 @@ def register_models(register):
         return
     models = json.loads(models_file.read_text())
     for model_id, details in models.items():
-        register(LlamaModel(model_id, details["path"]), aliases=details["aliases"])
+        register(
+            LlamaModel(
+                model_id,
+                details["path"],
+                is_llama2_chat=details.get("is_llama2_chat", False),
+            ),
+            aliases=details["aliases"],
+        )
 
 
 @llm.hookimpl
@@ -71,7 +84,12 @@ def register_commands(cli):
         multiple=True,
         help="Alias(es) to register the model under",
     )
-    def download_model(url, aliases):
+    @click.option(
+        "--llama2-chat",
+        is_flag=True,
+        help="Mark as using the Llama 2 chat prompt format",
+    )
+    def download_model(url, aliases, llama2_chat):
         "Download and register a model from a URL"
         if not url.endswith(".bin"):
             raise click.BadParameter("URL must end with .bin")
@@ -101,10 +119,13 @@ def register_commands(cli):
             models_file = _ensure_models_file()
             models = json.loads(models_file.read_text())
             model_id = download_path.stem
-            models[model_id] = {
+            info = {
                 "path": str(download_path.resolve()),
                 "aliases": aliases,
             }
+            if llama2_chat:
+                info["is_llama2_chat"] = True
+            models[model_id] = info
             models_file.write_text(json.dumps(models, indent=2))
 
     @llama_cpp.command()
@@ -118,16 +139,24 @@ def register_commands(cli):
         multiple=True,
         help="Alias(es) to register the model under",
     )
-    def add_model(filepath, aliases):
+    @click.option(
+        "--llama2-chat",
+        is_flag=True,
+        help="Mark as using the Llama 2 chat prompt format",
+    )
+    def add_model(filepath, aliases, llama2_chat):
         "Register a GGML model you have already downloaded with LLM"
         models_file = _ensure_models_file()
         models = json.loads(models_file.read_text())
         path = pathlib.Path(filepath)
         model_id = path.stem
-        models[model_id] = {
+        info = {
             "path": str(path.resolve()),
             "aliases": aliases,
         }
+        if llama2_chat:
+            info["is_llama2_chat"] = True
+        models[model_id] = info
         models_file.write_text(json.dumps(models, indent=2))
 
     @llama_cpp.command()
@@ -142,14 +171,61 @@ class LlamaModel(llm.Model):
     class Options(llm.Options):
         verbose: bool = False
 
-    def __init__(self, model_id, path):
+    def __init__(self, model_id, path, is_llama2_chat: bool = False):
         self.model_id = model_id
         self.path = path
+        self.is_llama2_chat = is_llama2_chat
+
+    def build_llama2_chat_prompt(self, prompt, conversation):
+        prompt_bits = []
+        current_system = None
+        if conversation is not None:
+            for prev_response in conversation.responses:
+                prompt_bits.append("<s>[INST] ")
+                if (
+                    prev_response.prompt.system
+                    and prev_response.prompt.system != current_system
+                ):
+                    prompt_bits.append(
+                        f"<<SYS>>\n{prev_response.prompt.system}\n<</SYS>>\n\n",
+                    )
+                    current_system = prev_response.prompt.system
+                prompt_bits.append(
+                    f"{prev_response.prompt.prompt} [/INST] ",
+                )
+                prompt_bits.append(
+                    f"{prev_response.text()} </s>",
+                )
+
+        system_prompt_to_add = None
+        if prompt.system and prompt.system != current_system:
+            # User provided a system prompt, use it
+            system_prompt_to_add = prompt.system
+
+        # Now we add the pieces for the new prompt
+        prompt_bits.append("<s>[INST] ")
+
+        # If no system prompt at all, use the default one
+        if not current_system and not system_prompt_to_add:
+            system_prompt_to_add = DEFAULT_LLAMA2_CHAT_SYSTEM_PROMPT
+
+        if system_prompt_to_add:
+            prompt_bits.append(
+                f"<<SYS>>\n{system_prompt_to_add}\n<</SYS>>\n\n",
+            )
+        prompt_bits.append(f"{prompt.prompt} [/INST] ")
+        return prompt_bits
 
     def execute(self, prompt, stream, response, conversation):
         with SuppressOutput(verbose=prompt.options.verbose):
             llm_model = Llama(model_path=self.path, verbose=prompt.options.verbose)
-            stream = llm_model(prompt.prompt, stream=True, max_tokens=4000)
+            if self.is_llama2_chat:
+                prompt_bits = self.build_llama2_chat_prompt(prompt, conversation)
+                prompt_text = "".join(prompt_bits)
+                response._prompt_json = {"prompt_bits": prompt_bits}
+            else:
+                prompt_text = prompt.prompt
+            stream = llm_model(prompt_text, stream=True, max_tokens=4000)
             for item in stream:
                 # Each item looks like this:
                 # {'id': 'cmpl-00...', 'object': 'text_completion', 'created': .., 'model': '/path', 'choices': [
