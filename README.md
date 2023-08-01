@@ -56,9 +56,17 @@ Models are registered in a `models.json` file. You can find the path to that fil
 ```bash
 llm llama-cpp models-file
 ```
+For example, to edit that file in Vim:
+```bash
+vim "$(llm llama-cpp models-file)"
+```
 To find the directory with downloaded models, run:
 ```bash
 llm llama-cpp models-dir
+```
+Here's how to change to that directory:
+```bash
+cd "$(llm llama-cpp models-dir)"
 ```
 
 ## Running a prompt through a model
