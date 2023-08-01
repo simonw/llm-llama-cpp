@@ -13,6 +13,16 @@ Install this plugin in the same environment as `llm`.
 ```bash
 llm install llm-llama-cpp
 ```
+The plugin has an additional dependency on [llama-cpp-python](https://github.com/abetlen/llama-cpp-python) which needs to be installed separately.
+
+If you have a C compiler available on your system you can install that like so:
+```bash
+llm install llama-cpp-python
+```
+If you are using Python 3.11 installed via Homebrew on an M1 or M2 Mac you may be able to install this wheel instead, which will install a lot faster as it will not need to run a C compiler:
+```bash
+llm install https://static.simonwillison.net/static/2023/llama_cpp_python-0.1.77-cp311-cp311-macosx_13_0_arm64.whl
+```
 ## Adding models
 
 After installation you will need to add or download some models.
@@ -24,16 +34,15 @@ The plugin can download models for you. Try running this command:
 ```bash
 llm llama-cpp download-model \
   https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGML/resolve/main/llama-2-7b-chat.ggmlv3.q8_0.bin \
-  --alias l2chat
+  --alias llama2-chat --alias l2c
 ```
-This will download the Llama 2 7B Chat GGML model file (this one is 6.67GB), save it and register it with the plugin.
+This will download the Llama 2 7B Chat GGML model file (this one is 6.67GB), save it and register it with the plugin - with two aliases, `llama2-chat` and `l2c`.
 
 If you have already downloaded a `llama.cpp` compatible model you can tell the plugin to read it from its current location like this:
 
 ```bash
 llm llama-cpp add-models path/to/model.bin
 ```
-The model filename (minus the `.bin` extension) will be registered as its ID for executing the model. You can also set one or more aliases with both the `--alias` option.
 
 ## Running a prompt through a model
 
@@ -43,7 +52,7 @@ llm -m llama-2-7b-chat.ggmlv3.q8_0 'five names for a cute pet skunk'
 ```
 Or if you registered an alias you can use that instead:
 ```bash
-llm -m l2chat 'five creative names for a pet hedgehog'
+llm -m llama2-chat 'five creative names for a pet hedgehog'
 ```
 
 ## More models to try
