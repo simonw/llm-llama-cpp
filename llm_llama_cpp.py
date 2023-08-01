@@ -175,21 +175,35 @@ class LlamaModel(llm.Model):
         self.model_id = model_id
         self.path = path
         self.is_llama2_chat = is_llama2_chat
+        self.default_system_prompt = None
 
     def build_llama2_chat_prompt(self, prompt, conversation):
         prompt_bits = []
-        current_system = None
+        # First figure out the system prompt
+        system_prompt = None
+        if prompt.system:
+            system_prompt = prompt.system
+        else:
+            # Look for a system prompt in the conversation
+            if conversation is not None:
+                for prev_response in conversation.responses:
+                    if prev_response.prompt.system:
+                        system_prompt = prev_response.prompt.system
+        if system_prompt is None:
+            system_prompt = (
+                self.default_system_prompt or DEFAULT_LLAMA2_CHAT_SYSTEM_PROMPT
+            )
+
+        # Now build the prompt pieces
+        first = True
         if conversation is not None:
             for prev_response in conversation.responses:
                 prompt_bits.append("<s>[INST] ")
-                if (
-                    prev_response.prompt.system
-                    and prev_response.prompt.system != current_system
-                ):
+                if first:
                     prompt_bits.append(
-                        f"<<SYS>>\n{prev_response.prompt.system}\n<</SYS>>\n\n",
+                        f"<<SYS>>\n{system_prompt}\n<</SYS>>\n\n",
                     )
-                    current_system = prev_response.prompt.system
+                first = False
                 prompt_bits.append(
                     f"{prev_response.prompt.prompt} [/INST] ",
                 )
@@ -197,35 +211,30 @@ class LlamaModel(llm.Model):
                     f"{prev_response.text()} </s>",
                 )
 
-        system_prompt_to_add = None
-        if prompt.system and prompt.system != current_system:
-            # User provided a system prompt, use it
-            system_prompt_to_add = prompt.system
-
-        # Now we add the pieces for the new prompt
-        prompt_bits.append("<s>[INST] ")
-
-        # If no system prompt at all, use the default one
-        if not current_system and not system_prompt_to_add:
-            system_prompt_to_add = DEFAULT_LLAMA2_CHAT_SYSTEM_PROMPT
-
-        if system_prompt_to_add:
+        # Add the latest prompt
+        if not prompt_bits:
+            # Start with the system prompt
+            prompt_bits.append("<s>[INST] ")
             prompt_bits.append(
-                f"<<SYS>>\n{system_prompt_to_add}\n<</SYS>>\n\n",
+                f"<<SYS>>\n{system_prompt}\n<</SYS>>\n\n",
             )
+        else:
+            prompt_bits.append("<s>[INST] ")
         prompt_bits.append(f"{prompt.prompt} [/INST] ")
         return prompt_bits
 
     def execute(self, prompt, stream, response, conversation):
         with SuppressOutput(verbose=prompt.options.verbose):
-            llm_model = Llama(model_path=self.path, verbose=prompt.options.verbose)
+            llm_model = Llama(
+                model_path=self.path, verbose=prompt.options.verbose, n_ctx=4000
+            )
             if self.is_llama2_chat:
                 prompt_bits = self.build_llama2_chat_prompt(prompt, conversation)
                 prompt_text = "".join(prompt_bits)
                 response._prompt_json = {"prompt_bits": prompt_bits}
             else:
                 prompt_text = prompt.prompt
-            stream = llm_model(prompt_text, stream=True, max_tokens=4000)
+            stream = llm_model(prompt_text, stream=True)
             for item in stream:
                 # Each item looks like this:
                 # {'id': 'cmpl-00...', 'object': 'text_completion', 'created': .., 'model': '/path', 'choices': [
