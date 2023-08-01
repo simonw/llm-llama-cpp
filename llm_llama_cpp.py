@@ -2,11 +2,34 @@ import click
 import httpx
 import io
 import json
-from llama_cpp import Llama
 import llm
 import os
 import pathlib
 import sys
+
+try:
+    from llama_cpp import Llama
+except ImportError:
+    Llama = None
+    print(
+        "llama_cpp not installed, install with: pip install llama-cpp-python",
+        file=sys.stderr,
+    )
+
+
+def _ensure_models_dir():
+    directory = llm.user_dir() / "llama-cpp" / "models"
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
+
+def _ensure_models_file():
+    directory = llm.user_dir() / "llama-cpp"
+    directory.mkdir(parents=True, exist_ok=True)
+    filepath = directory / "models.json"
+    if not filepath.exists():
+        filepath.write_text("{}")
+    return filepath
 
 
 @llm.hookimpl
@@ -24,7 +47,20 @@ def register_models(register):
 def register_commands(cli):
     @cli.group()
     def llama_cpp():
-        "Commands for registering llama.cpp models with LLM"
+        "Commands for registering llama.cpp GGML models with LLM"
+
+    @llama_cpp.command()
+    def models_file():
+        "Display the path to the models.json file"
+        directory = llm.user_dir() / "llama-cpp"
+        directory.mkdir(parents=True, exist_ok=True)
+        models_file = directory / "models.json"
+        click.echo(models_file)
+
+    @llama_cpp.command()
+    def models_dir():
+        "Display the path to the directory holding downloaded models"
+        click.echo(_ensure_models_dir())
 
     @llama_cpp.command()
     @click.argument("url")
@@ -66,12 +102,8 @@ def register_commands(cli):
         help="Alias(es) to register the model under",
     )
     def add_model(filepath, aliases):
-        "Register a model with LLM"
-        directory = llm.user_dir() / "llama-cpp"
-        directory.mkdir(parents=True, exist_ok=True)
-        models_file = directory / "models.json"
-        if not models_file.exists():
-            models_file.write_text("{}")
+        "Register a GGML model you have already downloaded with LLM"
+        models_file = _ensure_models_file()
         models = json.loads(models_file.read_text())
         path = pathlib.Path(filepath)
         model_id = path.stem
@@ -83,12 +115,8 @@ def register_commands(cli):
 
     @llama_cpp.command()
     def models():
-        "List registered models"
-        directory = llm.user_dir() / "llama-cpp"
-        directory.mkdir(parents=True, exist_ok=True)
-        models_file = directory / "models.json"
-        if not models_file.exists():
-            models_file.write_text("{}")
+        "List registered GGML models"
+        models_file = _ensure_models_file()
         models = json.loads(models_file.read_text())
         click.echo(json.dumps(models, indent=2))
 

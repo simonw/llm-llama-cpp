@@ -41,7 +41,24 @@ This will download the Llama 2 7B Chat GGML model file (this one is 6.67GB), sav
 If you have already downloaded a `llama.cpp` compatible model you can tell the plugin to read it from its current location like this:
 
 ```bash
-llm llama-cpp add-models path/to/model.bin
+llm llama-cpp add-model path/to/llama-2-7b-chat.ggmlv3.q8_0.bin \
+  --alias l27c
+```
+The model filename (minus the `.bin` extension) will be registered as its ID for executing the model.
+
+You can also set one or more aliases using the `--alias` option.
+
+You can see a list of models you have registered in this way like this:
+```bash
+llm llama-cpp models
+```
+Models are registered in a `models.json` file. You can find the path to that file in order to edit it directly like so:
+```bash
+llm llama-cpp models-file
+```
+To find the directory with downloaded models, run:
+```bash
+llm llama-cpp models-dir
 ```
 
 ## Running a prompt through a model
