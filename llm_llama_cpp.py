@@ -168,6 +168,8 @@ def register_commands(cli):
 
 
 class LlamaModel(llm.Model):
+    can_stream = True
+
     class Options(llm.Options):
         verbose: bool = False
 
