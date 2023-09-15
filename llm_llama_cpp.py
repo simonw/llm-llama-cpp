@@ -91,8 +91,8 @@ def register_commands(cli):
     )
     def download_model(url, aliases, llama2_chat):
         "Download and register a model from a URL"
-        if not url.endswith(".bin"):
-            raise click.BadParameter("URL must end with .bin")
+        if not url.endswith(".gguf"):
+            raise click.BadParameter("URL must end with .gguf")
         with httpx.stream("GET", url, follow_redirects=True) as response:
             total_size = response.headers.get("content-length")
 

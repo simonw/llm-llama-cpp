@@ -19,10 +19,7 @@ If you have a C compiler available on your system you can install that like so:
 ```bash
 llm install llama-cpp-python
 ```
-If you are using Python 3.11 installed via Homebrew on an M1 or M2 Mac you may be able to install this wheel instead, which will install a lot faster as it will not need to run a C compiler:
-```bash
-llm install https://static.simonwillison.net/static/2023/llama_cpp_python-0.1.77-cp311-cp311-macosx_13_0_arm64.whl
-```
+
 ## Adding models
 
 After installation you will need to add or download some models.
@@ -33,20 +30,20 @@ The plugin can download models for you. Try running this command:
 
 ```bash
 llm llama-cpp download-model \
-  https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGML/resolve/main/llama-2-7b-chat.ggmlv3.q8_0.bin \
+  https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF/resolve/main/llama-2-7b-chat.Q6_K.gguf \
   --alias llama2-chat --alias l2c --llama2-chat
 ```
-This will download the Llama 2 7B Chat GGML model file (this one is 6.67GB), save it and register it with the plugin - with two aliases, `llama2-chat` and `l2c`.
+This will download the Llama 2 7B Chat GGUF model file (this one is 5.53GB), save it and register it with the plugin - with two aliases, `llama2-chat` and `l2c`.
 
 The `--llama2-chat` option configures it to run using a special Llama 2 Chat prompt format. You should omit this for models that are not Llama 2 Chat models.
 
 If you have already downloaded a `llama.cpp` compatible model you can tell the plugin to read it from its current location like this:
 
 ```bash
-llm llama-cpp add-model path/to/llama-2-7b-chat.ggmlv3.q8_0.bin \
+llm llama-cpp add-model path/to/llama-2-7b-chat.Q6_K.gguf \
   --alias l27c --llama2-chat
 ```
-The model filename (minus the `.bin` extension) will be registered as its ID for executing the model.
+The model filename (minus the `.gguf` extension) will be registered as its ID for executing the model.
 
 You can also set one or more aliases using the `--alias` option.
 
@@ -75,7 +72,7 @@ cd "$(llm llama-cpp models-dir)"
 
 Once you have downloaded and added a model, you can run a prompt like this:
 ```bash
-llm -m llama-2-7b-chat.ggmlv3.q8_0 'five names for a cute pet skunk'
+llm -m llama-2-7b-chat.Q6_K 'five names for a cute pet skunk'
 ```
 Or if you registered an alias you can use that instead:
 ```bash
@@ -89,7 +86,7 @@ llm -m llama2-chat 'five creative names for a pet hedgehog'
 This model is Llama 2 7B GGML without the chat training. You'll need to prompt it slightly differently:
 ```bash
 llm llama-cpp download-model \
-  https://huggingface.co/TheBloke/Llama-2-7B-GGML/resolve/main/llama-2-7b.ggmlv3.q8_0.bin \
+  https://huggingface.co/TheBloke/Llama-2-7B-GGUF/resolve/main/llama-2-7b.Q6_K.gguf \
   --alias llama2
 ```
 Try prompts that expect to be completed by the model, for example:
@@ -98,11 +95,20 @@ llm -m llama2 'Three fancy names for a posh albatross are:'
 ```
 ### Llama 2 Chat 13B
 
-This model is the Llama 2 13B Chat GGML model - a 13.83GB download:
+This model is the Llama 2 13B Chat GGML model - a 10.7GB download:
 ```bash
 llm llama-cpp download-model \
-  'https://huggingface.co/TheBloke/Llama-2-13B-chat-GGML/resolve/main/llama-2-13b-chat.ggmlv3.q8_0.bin'\
+  'https://huggingface.co/TheBloke/Llama-2-13B-chat-GGUF/resolve/main/llama-2-13b-chat.Q6_K.gguf'\
   -a llama2-chat-13b --llama2-chat
+```
+
+### Llama 2 Python 13B
+
+This model is the Llama 2 13B Python GGML model - a 9.24GB download:
+```bash
+llm llama-cpp download-model \
+  'https://huggingface.co/TheBloke/CodeLlama-13B-Python-GGUF/resolve/main/codellama-13b-python.Q5_K_M.gguf'\
+  -a llama2-python-13b --llama2-chat
 ```
 ## Development
 
