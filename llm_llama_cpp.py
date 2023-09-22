@@ -1,11 +1,16 @@
 import click
 import httpx
-import io
 import json
 import llm
 import os
 import pathlib
 import sys
+from typing import Optional
+try:
+    from pydantic import field_validator, Field  # type: ignore
+except ImportError:
+    from pydantic.fields import Field
+    from pydantic.class_validators import validator as field_validator  # type: ignore [no-redef]
 
 try:
     from llama_cpp import Llama
@@ -91,8 +96,6 @@ def register_commands(cli):
     )
     def download_model(url, aliases, llama2_chat):
         "Download and register a model from a URL"
-        if not url.endswith(".gguf"):
-            raise click.BadParameter("URL must end with .gguf")
         with httpx.stream("GET", url, follow_redirects=True) as response:
             total_size = response.headers.get("content-length")
 
@@ -172,6 +175,11 @@ class LlamaModel(llm.Model):
 
     class Options(llm.Options):
         verbose: bool = False
+        logprobs: Optional[int] = Field(
+            description="Include the log probabilities of most likely N per token",
+            default=None,
+            le=5,
+        )
 
     def __init__(self, model_id, path, is_llama2_chat: bool = False):
         self.model_id = model_id
@@ -228,7 +236,11 @@ class LlamaModel(llm.Model):
     def execute(self, prompt, stream, response, conversation):
         with SuppressOutput(verbose=prompt.options.verbose):
             llm_model = Llama(
-                model_path=self.path, verbose=prompt.options.verbose, n_ctx=4000
+                model_path=self.path,
+                verbose=prompt.options.verbose,
+                n_ctx=4000,
+                n_gpu_layers=1,
+                logits_all=bool(prompt.options.logprobs)
             )
             if self.is_llama2_chat:
                 prompt_bits = self.build_llama2_chat_prompt(prompt, conversation)
@@ -236,13 +248,19 @@ class LlamaModel(llm.Model):
                 response._prompt_json = {"prompt_bits": prompt_bits}
             else:
                 prompt_text = prompt.prompt
-            stream = llm_model(prompt_text, stream=True)
+            kwargs = {}
+            if prompt.options.logprobs is not None:
+                kwargs["logprobs"] = prompt.options.logprobs
+            stream = llm_model(prompt_text, stream=True, **kwargs)
+            bits = []
             for item in stream:
                 # Each item looks like this:
                 # {'id': 'cmpl-00...', 'object': 'text_completion', 'created': .., 'model': '/path', 'choices': [
                 #   {'text': '\n', 'index': 0, 'logprobs': None, 'finish_reason': None}
                 # ]}
+                bits.append(item)
                 yield item["choices"][0]["text"]
+            response.response_json = {"bits": bits}
 
 
 def human_size(num_bytes):
