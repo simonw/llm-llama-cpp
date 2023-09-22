@@ -19,6 +19,10 @@ If you have a C compiler available on your system you can install that like so:
 ```bash
 llm install llama-cpp-python
 ```
+You could also try installing one of the wheels made available in their [latest release](https://github.com/abetlen/llama-cpp-python/releases/latest) on GitHub. Find the URL to the wheel for your platform, if one exists, and run:
+```bash
+llm install https://...
+```
 
 ## Adding models
 
