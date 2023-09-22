@@ -114,6 +114,23 @@ llm llama-cpp download-model \
   'https://huggingface.co/TheBloke/CodeLlama-13B-Python-GGUF/resolve/main/codellama-13b-python.Q5_K_M.gguf'\
   -a llama2-python-13b --llama2-chat
 ```
+
+## Options
+
+The following options are available:
+
+- `-o verbose 1` - output more verbose logging
+- `-o no_gpu 1` - remove the default `n_gpu_layers=1`` argument, which should disable GPU usage
+- `-o n_ctx 1024` - set the `n_ctx` argument to `1024` (the default is `4000`)
+
+For example:
+
+```bash
+llm chat -m llama2-chat-13b -o n_ctx 1024
+```
+
+These are mainly provided to support experimenting with different ways of executing the underlying model.
+
 ## Development
 
 To set up this plugin locally, first checkout the code. Then create a new virtual environment:

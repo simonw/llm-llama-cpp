@@ -8,6 +8,12 @@ import pathlib
 import sys
 
 try:
+    from pydantic import field_validator, Field  # type: ignore
+except ImportError:
+    from pydantic.fields import Field
+    from pydantic.class_validators import validator as field_validator  # type: ignore [no-redef]
+
+try:
     from llama_cpp import Llama
 except ImportError:
     Llama = None
@@ -169,7 +175,13 @@ class LlamaModel(llm.Model):
     can_stream = True
 
     class Options(llm.Options):
-        verbose: bool = False
+        verbose: bool = Field(
+            description="Whether to print verbose output from the model", default=False
+        )
+        no_gpu: bool = Field(
+            description="Remove the default n_gpu_layers=1 argument", default=False
+        )
+        n_ctx: int = Field(description="n_ctx argument, defaults to 4000", default=None)
 
     def __init__(self, model_id, path, is_llama2_chat: bool = False):
         self.model_id = model_id
@@ -225,8 +237,11 @@ class LlamaModel(llm.Model):
 
     def execute(self, prompt, stream, response, conversation):
         with SuppressOutput(verbose=prompt.options.verbose):
+            kwargs = {"n_ctx": prompt.options.n_ctx or 4000, "n_gpu_layers": 1}
+            if prompt.options.no_gpu:
+                kwargs.pop("n_gpu_layers")
             llm_model = Llama(
-                model_path=self.path, verbose=prompt.options.verbose, n_ctx=4000
+                model_path=self.path, verbose=prompt.options.verbose, **kwargs
             )
             if self.is_llama2_chat:
                 prompt_bits = self.build_llama2_chat_prompt(prompt, conversation)
