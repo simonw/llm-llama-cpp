@@ -23,6 +23,11 @@ You could also try installing one of the wheels made available in their [latest 
 ```bash
 llm install https://...
 ```
+If you are on an Apple Silicon Mac you can try this command, which should compile the package with METAL support for running on your GPU:
+
+```bash
+CMAKE_ARGS="-DLLAMA_METAL=on" FORCE_CMAKE=1 llm install llama-cpp-python
+```
 
 ## Adding models
 
