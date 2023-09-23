@@ -1,17 +1,19 @@
-import click
-import httpx
 import io
 import json
-import llm
 import os
 import pathlib
 import sys
 
+import click
+import httpx
+import llm
+
 try:
-    from pydantic import field_validator, Field  # type: ignore
+    from pydantic import Field, field_validator  # type: ignore
 except ImportError:
+    from pydantic.class_validators import \
+        validator as field_validator  # type: ignore [no-redef]
     from pydantic.fields import Field
-    from pydantic.class_validators import validator as field_validator  # type: ignore [no-redef]
 
 try:
     from llama_cpp import Llama
@@ -249,7 +251,7 @@ class LlamaModel(llm.Model):
                 response._prompt_json = {"prompt_bits": prompt_bits}
             else:
                 prompt_text = prompt.prompt
-            stream = llm_model(prompt_text, stream=True)
+            stream = llm_model(prompt_text, stream=True, max_tokens=4000)
             for item in stream:
                 # Each item looks like this:
                 # {'id': 'cmpl-00...', 'object': 'text_completion', 'created': .., 'model': '/path', 'choices': [
