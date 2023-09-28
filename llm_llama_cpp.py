@@ -3,6 +3,7 @@ import json
 import os
 import pathlib
 import sys
+from typing import Optional
 
 import click
 import httpx
@@ -11,8 +12,9 @@ import llm
 try:
     from pydantic import Field, field_validator  # type: ignore
 except ImportError:
-    from pydantic.class_validators import \
-        validator as field_validator  # type: ignore [no-redef]
+    from pydantic.class_validators import (
+        validator as field_validator,
+    )  # type: ignore [no-redef]
     from pydantic.fields import Field
 
 try:
@@ -186,6 +188,9 @@ class LlamaModel(llm.Model):
         n_gpu_layers: int = Field(
             description="Number of GPU layers to use, defaults to 1", default=None
         )
+        max_tokens: int = Field(
+            description="Max tokens to return, defaults to 4000", default=None
+        )
         n_ctx: int = Field(description="n_ctx argument, defaults to 4000", default=None)
 
     def __init__(self, model_id, path, is_llama2_chat: bool = False):
@@ -256,7 +261,9 @@ class LlamaModel(llm.Model):
                 response._prompt_json = {"prompt_bits": prompt_bits}
             else:
                 prompt_text = prompt.prompt
-            stream = llm_model(prompt_text, stream=True, max_tokens=4000)
+            stream = llm_model(
+                prompt_text, stream=True, max_tokens=prompt.options.max_tokens or 4000
+            )
             for item in stream:
                 # Each item looks like this:
                 # {'id': 'cmpl-00...', 'object': 'text_completion', 'created': .., 'model': '/path', 'choices': [
