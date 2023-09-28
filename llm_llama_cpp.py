@@ -181,6 +181,9 @@ class LlamaModel(llm.Model):
         no_gpu: bool = Field(
             description="Remove the default n_gpu_layers=1 argument", default=False
         )
+        n_gpu_layers: int = Field(
+            description="Number of GPU layers to use, defaults to 1", default=None
+        )
         n_ctx: int = Field(description="n_ctx argument, defaults to 4000", default=None)
 
     def __init__(self, model_id, path, is_llama2_chat: bool = False):
@@ -240,6 +243,8 @@ class LlamaModel(llm.Model):
             kwargs = {"n_ctx": prompt.options.n_ctx or 4000, "n_gpu_layers": 1}
             if prompt.options.no_gpu:
                 kwargs.pop("n_gpu_layers")
+            if prompt.options.n_gpu_layers:
+                kwargs["n_gpu_layers"] = prompt.options.n_gpu_layers
             llm_model = Llama(
                 model_path=self.path, verbose=prompt.options.verbose, **kwargs
             )
