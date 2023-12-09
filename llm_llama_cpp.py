@@ -3,7 +3,7 @@ import json
 import os
 import pathlib
 import sys
-from typing import Optional
+from typing import Optional, Union, List
 
 import click
 import httpx
@@ -189,10 +189,26 @@ class LlamaModel(llm.Model):
         n_gpu_layers: int = Field(
             description="Number of GPU layers to use, defaults to 1", default=None
         )
-        max_tokens: int = Field(
-            description="Max tokens to return, defaults to 4000", default=None
-        )
         n_ctx: int = Field(description="n_ctx argument, defaults to 4000", default=None)
+        suffix: Optional[str] = Field(description="A suffix to append to the generated text. If None, no suffix is appended, defaults to None", default=None)
+        max_tokens: int = Field(
+            description="Max tokens to return, defaults to 4000", default=4000
+        )
+        temperature: float = Field(description="The temperature to use for sampling, defaults to 0.8", default=0.8)
+        top_p: float = Field(description="The top-p value to use for sampling, defaults to 0.95", default=0.95)
+        logprobs: Optional[int] = Field(description="The number of logprobs to return. If None, no logprobs are returned, defaults to None", default=None)
+        echo: bool = Field(description="Whether to echo the prompt, defaults to False", default=False)
+        stop: Optional[Union[str, List[str]]] = Field(description="A list of strings to stop generation when encountered, defaults to []", default=[])
+        frequency_penalty: float = Field(description="Sets frequency_penalty parameter in the model, defaults to 0.0", default=0.0)
+        presence_penalty: float = Field(description="Sets presence_penalty parameter in the model, defaults to 0.0", default=0.0)
+        repeat_penalty: float = Field(description="The penalty to apply to repeated tokens.", default=1.1)
+        top_k: int = Field(description="The top-k sampling parameter, defaults to 40", default=40)
+        stream: bool = Field(description="Whether to stream the results, defaults to True", default=True)
+        tfs_z: float = Field(description="Sets tfs_z parameter in the model, defaults to 1.0", default=1.0)
+        mirostat_mode: int = Field(description="Sets mirostat_mode parameter in the model, defaults to 0", default=0)
+        mirostat_tau: float = Field(description="Sets mirostat_tau parameter in the model, defaults to 5.0", default=5.0)
+        mirostat_eta: float = Field(description="Sets mirostat_eta parameter in the model, defaults to 0.1", default=0.1)
+        model: Optional[str] = Field(description="Sets model parameter in the model, defaults to None", default=None)
 
     def __init__(self, model_id, path, is_llama2_chat: bool = False):
         self.model_id = model_id
@@ -268,7 +284,24 @@ class LlamaModel(llm.Model):
             else:
                 prompt_text = prompt.prompt
             stream = llm_model(
-                prompt_text, stream=True, max_tokens=prompt.options.max_tokens or 4000
+                prompt_text,
+                suffix=prompt.options.suffix,
+                max_tokens=prompt.options.max_tokens,
+                temperature=prompt.options.temperature,
+                top_p=prompt.options.top_p,
+                logprobs=prompt.options.logprobs,
+                echo=prompt.options.echo,
+                stop=prompt.options.stop,
+                frequency_penalty=prompt.options.frequency_penalty,
+                presence_penalty=prompt.options.presence_penalty,
+                repeat_penalty=prompt.options.repeat_penalty,
+                top_k=prompt.options.top_k,
+                stream=prompt.options.stream,
+                tfs_z=prompt.options.tfs_z,
+                mirostat_mode=prompt.options.mirostat_mode,
+                mirostat_tau=prompt.options.mirostat_tau,
+                mirostat_eta=prompt.options.mirostat_eta,
+                model=prompt.options.model
             )
             for item in stream:
                 # Each item looks like this:
