@@ -28,10 +28,27 @@ If you are on an Apple Silicon Mac you can try this command, which should compil
 ```bash
 CMAKE_ARGS="-DLLAMA_METAL=on" FORCE_CMAKE=1 llm install llama-cpp-python
 ```
+## Running a GGUF model directly
+
+The quickest way to try this plugin out is to download a GGUF file and execute that using the `gguf` model with the `-o path PATH` option:
+
+For example, download the `una-cybertron-7b-v2-bf16.Q8_0.gguf` file from [TheBloke/una-cybertron-7B-v2-GGUF](https://huggingface.co/TheBloke/una-cybertron-7B-v2-GGUF/tree/main) and execute it like this:
+
+```bash
+llm -m gguf \
+  -o path una-cybertron-7b-v2-bf16.Q8_0.gguf \
+  'Instruction: Five reasons to get a pet walrus
+Response:'
+```
+The output starts like this:
+
+>  1. Walruses are fascinating animals that possess unique qualities that can captivate and entertain you for hours on end. Getting the chance to be around one regularly would ensure that you'll never run out of interesting things to learn about them, whether from an educational or personal standpoint.
+>
+> 2. Pet walruses can help alleviate depression and anxiety, as they require constant care and attention. Nurturing a relationship with these intelligent creatures provides comfort and fulfillment, fostering a sense of purpose in your daily life. Moreover, their playful nature encourages laughter and joy, promoting overall happiness. [...]
 
 ## Adding models
 
-After installation you will need to add or download some models.
+You can also add or download models to execute them directly using the `-m` option.
 
 This tool should work with any model that works with `llama.cpp`.
 
