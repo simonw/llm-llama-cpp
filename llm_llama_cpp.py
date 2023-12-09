@@ -64,6 +64,7 @@ def register_models(register):
             ),
             aliases=details["aliases"],
         )
+    register(LlamaGGUF())
 
 
 @llm.hookimpl
@@ -245,6 +246,9 @@ class LlamaModel(llm.Model):
         prompt_bits.append(f"{prompt.prompt} [/INST] ")
         return prompt_bits
 
+    def get_path(self, options):
+        return self.path
+
     def execute(self, prompt, stream, response, conversation):
         with SuppressOutput(verbose=prompt.options.verbose):
             kwargs = {"n_ctx": prompt.options.n_ctx or 4000, "n_gpu_layers": 1}
@@ -253,7 +257,9 @@ class LlamaModel(llm.Model):
             if prompt.options.n_gpu_layers:
                 kwargs["n_gpu_layers"] = prompt.options.n_gpu_layers
             llm_model = Llama(
-                model_path=self.path, verbose=prompt.options.verbose, **kwargs
+                model_path=self.get_path(prompt.options),
+                verbose=prompt.options.verbose,
+                **kwargs,
             )
             if self.is_llama2_chat:
                 prompt_bits = self.build_llama2_chat_prompt(prompt, conversation)
@@ -270,6 +276,22 @@ class LlamaModel(llm.Model):
                 #   {'text': '\n', 'index': 0, 'logprobs': None, 'finish_reason': None}
                 # ]}
                 yield item["choices"][0]["text"]
+
+
+class LlamaGGUF(LlamaModel):
+    model_id = "gguf"
+    is_llama2_chat = False
+
+    class Options(LlamaModel.Options):
+        path: str = Field(
+            description="Path to a model GGUF file",
+        )
+
+    def __init__(self):
+        pass
+
+    def get_path(self, options):
+        return options.path
 
 
 def human_size(num_bytes):
