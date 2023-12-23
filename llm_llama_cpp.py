@@ -50,6 +50,7 @@ def _ensure_models_file():
 
 @llm.hookimpl
 def register_models(register):
+    register(LlamaGGUF())
     directory = llm.user_dir() / "llama-cpp"
     models_file = directory / "models.json"
     if not models_file.exists():
@@ -64,7 +65,6 @@ def register_models(register):
             ),
             aliases=details["aliases"],
         )
-    register(LlamaGGUF())
 
 
 @llm.hookimpl
