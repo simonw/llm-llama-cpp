@@ -193,7 +193,9 @@ class LlamaModel(llm.Model):
             description="Max tokens to return, defaults to 4000", default=None
         )
         n_ctx: int = Field(description="n_ctx argument, defaults to 4000", default=None)
-
+        truncate_ctx: int = Field(
+            description="Number of tokens to truncate context to, defaults to 3500", default=3500
+        )
     def __init__(self, model_id, path, is_llama2_chat: bool = False):
         self.model_id = model_id
         self.path = path
@@ -267,6 +269,7 @@ class LlamaModel(llm.Model):
                 response._prompt_json = {"prompt_bits": prompt_bits}
             else:
                 prompt_text = prompt.prompt
+            prompt_text = llm_model.detokenize(llm_model.tokenize(prompt_text.encode())[-prompt.options.truncate_ctx:]).decode()
             stream = llm_model(
                 prompt_text, stream=True, max_tokens=prompt.options.max_tokens or 4000
             )
