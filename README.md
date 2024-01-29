@@ -143,8 +143,8 @@ The following options are available:
 
 - `-o verbose 1` - output more verbose logging
 - `-o max_tokens 100` - max tokens to return. Defaults to 4000.
-- `-o no_gpu 1` - remove the default `n_gpu_layers=1`` argument, which should disable GPU usage
-- `-o n_gpu_layers 10` - increase the `n_gpu_layers` argument to a higher value (the default is `1`)
+- `-o no_gpu 1` - remove the default `n_gpu_layers=-1`` argument, which should disable GPU usage
+- `-o n_gpu_layers 10` - increase the `n_gpu_layers` argument to a higher value (the default is `-1`)
 - `-o n_ctx 1024` - set the `n_ctx` argument to `1024` (the default is `4000`)
 
 For example:

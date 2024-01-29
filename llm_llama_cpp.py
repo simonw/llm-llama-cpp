@@ -184,10 +184,10 @@ class LlamaModel(llm.Model):
             description="Whether to print verbose output from the model", default=False
         )
         no_gpu: bool = Field(
-            description="Remove the default n_gpu_layers=1 argument", default=False
+            description="Remove the default n_gpu_layers=-1 argument", default=False
         )
         n_gpu_layers: int = Field(
-            description="Number of GPU layers to use, defaults to 1", default=None
+            description="Number of GPU layers to use, defaults to -1", default=None
         )
         max_tokens: int = Field(
             description="Max tokens to return, defaults to 4000", default=None
@@ -251,7 +251,7 @@ class LlamaModel(llm.Model):
 
     def execute(self, prompt, stream, response, conversation):
         with SuppressOutput(verbose=prompt.options.verbose):
-            kwargs = {"n_ctx": prompt.options.n_ctx or 4000, "n_gpu_layers": 1}
+            kwargs = {"n_ctx": prompt.options.n_ctx or 4000, "n_gpu_layers": -1}
             if prompt.options.no_gpu:
                 kwargs.pop("n_gpu_layers")
             if prompt.options.n_gpu_layers:
